@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+    id 'java-library'
+}
+
+group = 'com.atlasflag'
+version = '1.0.0-SNAPSHOT'
+description = 'Java SDK for AtlasFlag Feature Flag Service'
+
+java {
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+    withSourcesJar()
+    withJavadocJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // HTTP Client
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    
+    // JSON
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.0'
+    
+    // Logging
+    implementation 'org.slf4j:slf4j-api:2.0.9'
+    
+    // Caching (fixes memory leak)
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+    
+    // Test Dependencies
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:5.7.0'
+}

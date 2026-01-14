@@ -1,0 +1,10 @@
+allprojects {
+    group = 'com.atlasflag'
+    version = '1.0.0-SNAPSHOT'
+}
+
+subprojects {
+    repositories {
+        mavenCentral()
+    }
+}
