@@ -28,56 +28,7 @@
 
 Service configuration is in `service/src/main/resources/application.yml`:
 
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/atlasflag
-    username: atlasflag
-    password: atlasflag
-    hikari:
-      maximum-pool-size: 20
-      minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-      leak-detection-threshold: 60000
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      password:
-      timeout: 2000ms
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
 
-atlasflag:
-  jwt:
-    secret: ${JWT_SECRET:atlasflag-secret-key-change-in-production-min-256-bits}
-    expiration: 86400000 # 24 hours
-  cache:
-    ttl: 300 # 5 minutes in seconds
-    enabled: true
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus,metrics
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-```
 
 **Important Configuration Notes:**
 
@@ -92,9 +43,6 @@ management:
 
 ```
 atlas-flag/
-├── docs/              # Documentation
-│   ├── architecture.md
-│   └── prd.md
 ├── service/           # Spring Boot service
 │   ├── src/
 │   │   ├── main/
