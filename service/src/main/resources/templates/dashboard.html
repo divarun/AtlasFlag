@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Atlas Flag</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+<div class="min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-600">Atlas Flag</h1>
+            <div class="flex items-center gap-4">
+                <span id="usernameDisplay" class="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full"></span>
+                <button onclick="logout()"
+                        class="text-sm bg-red-50 text-red-600 px-4 py-2 rounded hover:bg-red-100 transition-colors">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <section id="flagsSection">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-gray-800">Feature Flags</h2>
+                <button onclick="showCreateModal()"
+                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                    + Create Flag
+                </button>
+            </div>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Key</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Env</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rollout</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="flagsTable" class="divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Flag Modal -->
+<div id="flagModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 max-w-lg w-full">
+        <h2 id="modalTitle" class="text-xl font-bold mb-4 text-blue-600">Create Feature Flag</h2>
+        <form id="flagForm" class="space-y-4">
+            <input type="hidden" id="flagId">
+            <div>
+                <label class="text-sm font-medium">Flag Key</label>
+                <input id="flagKey" required class="w-full border-gray-300 border px-3 py-2 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-600">
+            </div>
+            <div>
+                <label class="text-sm font-medium">Name</label>
+                <input id="flagName" required class="w-full border-gray-300 border px-3 py-2 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-600">
+            </div>
+            <div>
+                <label class="text-sm font-medium">Description</label>
+                <textarea id="flagDescription" rows="3" class="w-full border-gray-300 border px-3 py-2 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-600"></textarea>
+            </div>
+            <div>
+                <label class="text-sm font-medium">Rollout: <span id="rolloutValue">100</span>%</label>
+                <input type="range" id="rolloutPercentage" min="0" max="100" value="100" class="w-full" oninput="document.getElementById('rolloutValue').textContent = this.value">
+            </div>
+            <div>
+                <label class="text-sm font-medium">Environment</label>
+                <select id="flagEnvironment" class="w-full border-gray-300 border px-3 py-2 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-600">
+                    <option value="DEVELOPMENT">Development</option>
+                    <option value="STAGING">Staging</option>
+                    <option value="PRODUCTION">Production</option>
+                </select>
+            </div>
+            <div class="flex gap-6">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="flagEnabled"> Enabled
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="defaultValue"> Default Value
+                </label>
+            </div>
+            <div class="flex gap-3 pt-4">
+                <button type="button" onclick="closeModal('flagModal')" class="flex-1 border rounded py-2 hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" class="flex-1 bg-blue-600 text-white rounded py-2 hover:bg-blue-700 transition-colors">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/js/app.js" defer></script>
+</body>
+</html>

@@ -37,6 +37,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/flags/evaluate").permitAll() // Public endpoint for SDK
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
+                    .requestMatchers("/", "/login", "/dashboard").permitAll()
+                    .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

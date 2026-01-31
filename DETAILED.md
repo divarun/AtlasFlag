@@ -236,7 +236,7 @@ Access audit logs via:
 ### Phase 2
 
 - [ ] Approval workflows
-- [ ] Web UI for flag management
+- [x] Web UI for flag management
 - [ ] Enhanced multi-environment support (promotion workflows)
 - [ ] Flag targeting (user attributes, segments)
 - [ ] Scheduled flag changes

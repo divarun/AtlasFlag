@@ -45,3 +45,6 @@ CREATE INDEX idx_environment ON feature_flags(environment);
 CREATE INDEX idx_entity_type ON audit_logs(entity_type, entity_id);
 CREATE INDEX idx_user ON audit_logs(user_id);
 CREATE INDEX idx_timestamp ON audit_logs(timestamp);
+
+INSERT INTO users (username, email, role)
+VALUES ('admin', 'admin@yourdomain.com', 'ADMIN');
