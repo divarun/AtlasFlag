@@ -99,42 +99,6 @@ FeatureFlagService.updateFlag()
     └─ AuditService.logAction() — @Async, non-blocking
 ```
 
-### Module Layout
-
-```
-atlas-flag/
-├── service/                         # Spring Boot application
-│   └── src/main/java/com/atlasflag/
-│       ├── config/
-│       │   ├── AppConfig.java       # PasswordEncoder bean + DataInitializer
-│       │   ├── CacheConfig.java     # Caffeine CacheManager (in-memory)
-│       │   └── SecurityConfig.java  # JWT filter chain + CORS
-│       ├── controller/
-│       │   ├── AuthController.java
-│       │   ├── FeatureFlagController.java  # flags + analytics + SSE stream
-│       │   ├── AuditController.java
-│       │   ├── UserController.java         # user management (ADMIN only)
-│       │   ├── WebhookController.java      # webhook CRUD (ADMIN only)
-│       │   └── ViewController.java         # serves HTML pages
-│       ├── domain/                         # JPA entities
-│       ├── dto/                            # request/response objects
-│       ├── repository/                     # Spring Data repositories
-│       ├── security/
-│       │   ├── JwtTokenProvider.java
-│       │   └── JwtAuthenticationFilter.java
-│       └── service/
-│           ├── FeatureFlagService.java
-│           ├── AuthenticationService.java
-│           ├── AuditService.java
-│           ├── WebhookService.java
-│           ├── EvaluationAnalyticsService.java  # async counter, analytics queries
-│           └── FlagChangePublisher.java          # SSE emitter registry
-├── sdk-java/                        # Java client SDK
-├── frontend/                        # Static files for Vercel
-└── infra/
-    └── docker-compose.yml           # PostgreSQL (local dev only)
-```
-
 ---
 
 ## Spring Boot Starter
@@ -329,9 +293,14 @@ Response `201 Created` → `FeatureFlagDTO`
 
 #### GET /api/v1/flags
 
-List flags by environment.
+List flags by environment. Optionally filter by flag key substring.
 
-Query params: `environment` (default: `default`)
+Query params: `environment` (default: `default`) · `search` (optional — substring match on flag key)
+
+```bash
+curl "http://localhost:8080/api/v1/flags?environment=PRODUCTION&search=checkout" \
+  -H "Authorization: Bearer $TOKEN"
+```
 
 Response `200 OK` → `List<FeatureFlagDTO>`
 
@@ -376,15 +345,6 @@ Response `201 Created` → `FeatureFlagDTO` for the new flag in the target envir
 Error `409 Conflict` if a flag with the same key already exists in the target environment.
 
 ---
-
-#### GET /api/v1/flags (with search)
-
-Now accepts an optional `search` query param to filter by flag key prefix/substring.
-
-```bash
-curl "http://localhost:8080/api/v1/flags?environment=PRODUCTION&search=checkout" \
-  -H "Authorization: Bearer $TOKEN"
-```
 
 ---
 
@@ -443,6 +403,17 @@ Request:
 Roles: `ADMIN` · `USER` · `VIEWER`
 
 Response `201 Created` → `UserDTO`
+
+#### PUT /api/v1/users/{id}
+
+Update a user's username, email, and role.
+
+Request:
+```json
+{ "username": "alice", "email": "alice@example.com", "role": "ADMIN" }
+```
+
+Response `200 OK` → updated `UserDTO`. Returns `400` if the new username or email is already taken by a different user.
 
 #### PUT /api/v1/users/{id}/password
 
@@ -976,7 +947,7 @@ The `?sslmode=require` suffix is mandatory for Neon connections.
 - [x] Webhook notifications (HMAC-SHA256 signed, 6 event types)
 - [x] Immutable audit trail
 - [x] JWT auth + RBAC (ADMIN · USER · VIEWER)
-- [x] User management API (create, delete, change password)
+- [x] User management API (create, edit, delete, change password)
 - [x] Web dashboard (flags · audit logs · webhooks)
 - [x] Caffeine in-memory cache
 - [x] Vercel + Render + Neon deployment support
@@ -989,7 +960,7 @@ The `?sslmode=require` suffix is mandatory for Neon connections.
 - [ ] Approval workflows (flag changes require review before activating in PRODUCTION)
 - [ ] Scheduled flag changes (turn on at a specific time)
 - [ ] Flag dependencies (flag B requires flag A)
-- [ ] User management UI (in dashboard)
+- [x] User management UI (create, edit, delete users, change passwords)
 
 ### Phase 3 — Scale
 - [ ] Python / Node.js / Go SDKs
@@ -1003,19 +974,7 @@ The `?sslmode=require` suffix is mandatory for Neon connections.
 
 ## Contributing
 
-1. Fork and clone the repo
-2. Create a feature branch: `git checkout -b feat/my-feature`
-3. Run existing tests: `./gradlew test`
-4. Add tests for your change
-5. Submit a PR with a clear description
-
-### Code Conventions
-
-- Constructor injection everywhere — no field injection
-- Service layer owns business logic — controllers are thin
-- New mutations must create an audit log entry via `AuditService.logAction()`
-- Cache eviction must accompany any write to `feature_flags`
-- No unchecked exceptions from SDK methods — always return a safe default
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide: development setup, code conventions, testing, PR process, and architecture invariants.
 
 ---
 

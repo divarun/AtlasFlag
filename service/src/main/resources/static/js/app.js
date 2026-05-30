@@ -14,6 +14,7 @@ let sseConnection = null;
 let confirmCallback = null;
 let actionSheetCtx = null;
 const auditLogChanges = new Map();
+const userMap = new Map();
 
 if (!token) window.location.href = '/login';
 
@@ -105,12 +106,17 @@ document.addEventListener('DOMContentLoaded', () => {
     connectSSE();
     document.getElementById('flagForm')?.addEventListener('submit', submitFlagForm);
     document.getElementById('webhookForm')?.addEventListener('submit', submitWebhookForm);
+    document.getElementById('userForm')?.addEventListener('submit', submitUserForm);
+    document.getElementById('changePasswordForm')?.addEventListener('submit', submitChangePasswordForm);
+
+    const payload = getJwtPayload();
+    if (payload.role === 'ADMIN') document.getElementById('tabUsers')?.classList.remove('hidden');
 });
 
 /* ── Tabs ────────────────────────────────────────────────────────────────── */
 function showTab(tab) {
-    const sections = { flags: 'flagsSection', audit: 'auditSection', webhooks: 'webhooksSection' };
-    const buttons  = { flags: 'tabFlags',     audit: 'tabAudit',     webhooks: 'tabWebhooks' };
+    const sections = { flags: 'flagsSection', audit: 'auditSection', webhooks: 'webhooksSection', users: 'usersSection' };
+    const buttons  = { flags: 'tabFlags',     audit: 'tabAudit',     webhooks: 'tabWebhooks',     users: 'tabUsers' };
 
     Object.keys(sections).forEach(t => {
         const section = document.getElementById(sections[t]);
@@ -123,6 +129,7 @@ function showTab(tab) {
 
     if (tab === 'audit')    { currentPage = 0; loadAuditLogs(); }
     if (tab === 'webhooks') loadWebhooks();
+    if (tab === 'users')    loadUsers();
 }
 
 /* ── SSE ─────────────────────────────────────────────────────────────────── */
@@ -704,6 +711,156 @@ function generateSecret() {
     const a = new Uint8Array(32);
     crypto.getRandomValues(a);
     document.getElementById('webhookSecret').value = Array.from(a).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ── Users ───────────────────────────────────────────────────────────────── */
+function getJwtPayload() {
+    try { return JSON.parse(atob(token.split('.')[1])); } catch { return {}; }
+}
+
+async function loadUsers() {
+    document.getElementById('usersTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px"><div style="display:inline-block;width:18px;height:18px;border:2px solid #A7D4D1;border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite"></div></td></tr>`;
+    try {
+        const users = await apiCall(`${API_V1}/users`);
+        renderUsers(users || []);
+    } catch {
+        document.getElementById('usersTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:#DC2626;font-size:13px">Failed to load users</td></tr>`;
+    }
+}
+
+const ROLE_STYLE = {
+    ADMIN:  'background:#FEF2F2;color:#991B1B',
+    USER:   'background:#EFF6FF;color:#1D4ED8',
+    VIEWER: 'background:#F1F5F9;color:#475569',
+};
+
+function renderUsers(users) {
+    userMap.clear();
+    users.forEach(u => userMap.set(u.id, u));
+    const body = document.getElementById('usersTable');
+    if (!users.length) {
+        body.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-3);font-size:13px">No users found</td></tr>`;
+        return;
+    }
+    body.innerHTML = users.map(u => {
+        const roleStyle = ROLE_STYLE[u.role] || ROLE_STYLE.VIEWER;
+        const isSelf = u.username === savedUser;
+        return `
+        <tr>
+            <td style="padding:13px 16px;font-size:13px">
+                <span style="font-weight:500;color:var(--text-1)">${escapeHtml(u.username)}</span>
+                ${isSelf ? `<span style="margin-left:6px;font-size:11px;font-weight:500;color:var(--teal);background:var(--teal-bg);padding:1px 6px;border-radius:4px">you</span>` : ''}
+            </td>
+            <td style="padding:13px 16px;font-size:13px;color:var(--text-2)" class="hidden sm:table-cell">${escapeHtml(u.email || '—')}</td>
+            <td style="padding:13px 16px">
+                <span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;${roleStyle}">${escapeHtml(u.role)}</span>
+            </td>
+            <td style="padding:13px 16px;font-size:13px;color:var(--text-3)" class="hidden sm:table-cell">${escapeHtml(new Date(u.createdAt).toLocaleDateString())}</td>
+            <td style="padding:13px 16px;text-align:right;white-space:nowrap">
+                <button onclick="editUser(${u.id})"
+                        style="font-size:12px;font-weight:500;color:var(--text-2);background:transparent;border:1px solid var(--border);padding:4px 10px;border-radius:7px;cursor:pointer;transition:all .12s;margin-right:4px;font-family:inherit"
+                        onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'">
+                    Edit
+                </button>
+                <button onclick="showChangePasswordModal(${u.id})"
+                        style="font-size:12px;font-weight:500;color:var(--text-2);background:transparent;border:1px solid var(--border);padding:4px 10px;border-radius:7px;cursor:pointer;transition:all .12s;margin-right:4px;font-family:inherit"
+                        onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'">
+                    Password
+                </button>
+                ${!isSelf ? `<button onclick="deleteUser(${u.id})"
+                        style="font-size:12px;font-weight:500;color:var(--text-3);background:transparent;border:none;padding:4px 8px;border-radius:7px;cursor:pointer;transition:color .12s;font-family:inherit"
+                        onmouseover="this.style.color='#DC2626'" onmouseout="this.style.color='var(--text-3)'">Delete</button>` : ''}
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function showCreateUserModal() {
+    document.getElementById('userForm').reset();
+    document.getElementById('editUserId').value = '';
+    document.getElementById('userPasswordSection').classList.remove('hidden');
+    document.getElementById('newUserPassword').required = true;
+    document.getElementById('userModalTitle').textContent = 'Add User';
+    document.getElementById('userSubmitBtn').textContent = 'Create User';
+    document.getElementById('userModal').classList.remove('hidden');
+}
+
+function editUser(id) {
+    const u = userMap.get(id);
+    if (!u) return;
+    document.getElementById('userForm').reset();
+    document.getElementById('editUserId').value = id;
+    document.getElementById('newUsername').value = u.username;
+    document.getElementById('newEmail').value = u.email || '';
+    document.getElementById('newRole').value = u.role;
+    document.getElementById('userPasswordSection').classList.add('hidden');
+    document.getElementById('newUserPassword').required = false;
+    document.getElementById('userModalTitle').textContent = 'Edit User';
+    document.getElementById('userSubmitBtn').textContent = 'Save Changes';
+    document.getElementById('userModal').classList.remove('hidden');
+}
+
+async function submitUserForm(e) {
+    e.preventDefault();
+    const editId = document.getElementById('editUserId').value;
+    const payload = {
+        username: document.getElementById('newUsername').value.trim(),
+        email:    document.getElementById('newEmail').value.trim(),
+        role:     document.getElementById('newRole').value,
+    };
+    if (!editId) payload.password = document.getElementById('newUserPassword').value;
+    try {
+        await apiCall(editId ? `${API_V1}/users/${editId}` : `${API_V1}/users`, editId ? 'PUT' : 'POST', payload);
+        closeModal('userModal');
+        loadUsers();
+        toast(editId ? `${payload.username} updated` : `User ${payload.username} created`, 'success');
+    } catch (err) {
+        toast(err.message || (editId ? 'Failed to update user' : 'Failed to create user'), 'error');
+    }
+}
+
+function deleteUser(id) {
+    const u = userMap.get(id);
+    if (!u) return;
+    showConfirm(
+        'Delete user',
+        `Delete "${u.username}"? This cannot be undone.`,
+        async () => {
+            try {
+                await apiCall(`${API_V1}/users/${id}`, 'DELETE');
+                loadUsers();
+                toast(`${u.username} deleted`, 'info');
+            } catch (err) {
+                toast(err.message || 'Failed to delete user', 'error');
+            }
+        },
+        'Delete user',
+        true
+    );
+}
+
+function showChangePasswordModal(id) {
+    const u = userMap.get(id);
+    if (!u) return;
+    document.getElementById('changePasswordForm').reset();
+    document.getElementById('changePasswordUserId').value = id;
+    document.getElementById('changePasswordFor').textContent = `for ${u.username}`;
+    document.getElementById('changePasswordModal').classList.remove('hidden');
+}
+
+async function submitChangePasswordForm(e) {
+    e.preventDefault();
+    const id = document.getElementById('changePasswordUserId').value;
+    const newPass     = document.getElementById('newPasswordField').value;
+    const confirmPass = document.getElementById('confirmPasswordField').value;
+    if (newPass !== confirmPass) { toast('Passwords do not match', 'error'); return; }
+    try {
+        await apiCall(`${API_V1}/users/${id}/password`, 'PUT', { password: newPass });
+        closeModal('changePasswordModal');
+        toast('Password updated', 'success');
+    } catch (err) {
+        toast(err.message || 'Failed to update password', 'error');
+    }
 }
 
 /* ── API ─────────────────────────────────────────────────────────────────── */

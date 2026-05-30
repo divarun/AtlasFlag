@@ -233,6 +233,14 @@
             </svg>
             Webhooks
         </button>
+        <button id="tabUsers" onclick="showTab('users')" class="nav-item hidden">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="flex-shrink:0">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"/>
+            </svg>
+            Users
+        </button>
     </nav>
 
     <!-- Footer -->
@@ -363,6 +371,39 @@
                     </thead>
                     <tbody id="webhooksTable">
                         <tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-3);font-size:13px">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Users ─────────────────────────────────────────────────────────── -->
+    <section id="usersSection" class="hidden">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px">
+            <div>
+                <h1 style="font-size:20px;font-weight:700;color:var(--text-1);letter-spacing:-.02em">Users</h1>
+                <p style="font-size:13px;color:var(--text-3);margin-top:3px">Manage user accounts and access roles</p>
+            </div>
+            <button onclick="showCreateUserModal()" class="btn-primary">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <span class="hidden sm:inline">Add User</span>
+            </button>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+            <div style="overflow-x:auto">
+                <table class="dtable">
+                    <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th class="hidden sm:table-cell">Email</th>
+                        <th>Role</th>
+                        <th class="hidden sm:table-cell">Created</th>
+                        <th style="text-align:right">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="usersTable">
+                        <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-3);font-size:13px">Loading…</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -604,6 +645,79 @@
             <code id="actionSheetTitle" class="mono" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--teal);background:var(--teal-bg);padding:5px 10px;border-radius:7px;display:block;width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></code>
         </div>
         <div id="actionSheetButtons" style="padding:0 8px 12px"></div>
+    </div>
+</div>
+
+<!-- User create modal -->
+<div id="userModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(12,26,46,.45);backdrop-filter:blur(4px)">
+    <div class="sheet sm:!animation-none modal-box w-full sm:max-w-md flex flex-col overflow-hidden" style="max-height:88vh">
+        <div class="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style="border-color:var(--border)">
+            <h2 id="userModalTitle" style="font-size:14px;font-weight:700;color:var(--text-1)">Add User</h2>
+            <button onclick="closeModal('userModal')" style="padding:5px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:var(--text-3)" onmouseover="this.style.background='var(--page)'" onmouseout="this.style.background='transparent'">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <form id="userForm" class="flex flex-col flex-1 overflow-hidden">
+            <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+                <input type="hidden" id="editUserId">
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Username <span style="color:#DC2626">*</span></label>
+                    <input id="newUsername" required placeholder="e.g. jane.doe" class="field" style="font-size:13px">
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Email <span style="color:#DC2626">*</span></label>
+                    <input id="newEmail" type="email" required placeholder="jane@example.com" class="field" style="font-size:13px">
+                </div>
+                <div id="userPasswordSection">
+                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Password <span style="color:#DC2626">*</span></label>
+                    <input id="newUserPassword" type="password" minlength="8" placeholder="Min 8 characters" class="field" style="font-size:13px">
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Role</label>
+                    <select id="newRole" class="field" style="font-size:13px">
+                        <option value="USER">User — can manage flags</option>
+                        <option value="VIEWER">Viewer — read only</option>
+                        <option value="ADMIN">Admin — full access</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0" class="pb-safe">
+                <button type="button" onclick="closeModal('userModal')" class="btn-ghost flex-1" style="justify-content:center">Cancel</button>
+                <button type="submit" id="userSubmitBtn" class="btn-primary flex-1" style="justify-content:center">Create User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Change password modal -->
+<div id="changePasswordModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(12,26,46,.45);backdrop-filter:blur(4px)">
+    <div class="sheet sm:!animation-none modal-box w-full sm:max-w-sm flex flex-col overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style="border-color:var(--border)">
+            <div>
+                <h2 style="font-size:14px;font-weight:700;color:var(--text-1)">Change Password</h2>
+                <p id="changePasswordFor" style="font-size:12px;color:var(--text-3);margin-top:2px"></p>
+            </div>
+            <button onclick="closeModal('changePasswordModal')" style="padding:5px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:var(--text-3)" onmouseover="this.style.background='var(--page)'" onmouseout="this.style.background='transparent'">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <form id="changePasswordForm" class="flex flex-col flex-1 overflow-hidden">
+            <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+                <input type="hidden" id="changePasswordUserId">
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">New Password <span style="color:#DC2626">*</span></label>
+                    <input id="newPasswordField" type="password" required minlength="8" placeholder="Min 8 characters" class="field" style="font-size:13px">
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Confirm Password <span style="color:#DC2626">*</span></label>
+                    <input id="confirmPasswordField" type="password" required minlength="8" placeholder="Repeat password" class="field" style="font-size:13px">
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0" class="pb-safe">
+                <button type="button" onclick="closeModal('changePasswordModal')" class="btn-ghost flex-1" style="justify-content:center">Cancel</button>
+                <button type="submit" class="btn-primary flex-1" style="justify-content:center">Update Password</button>
+            </div>
+        </form>
     </div>
 </div>
 

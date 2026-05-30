@@ -52,7 +52,7 @@ Use it to:
 | In-memory cache | Caffeine-backed, zero external dependencies |
 | Audit logging | Every change logged with before/after JSON |
 | Role-based access | `ADMIN` · `USER` · `VIEWER` — enforced via JWT claims |
-| User management | Create/delete users, change passwords via API |
+| User management | Create, edit, delete users and change passwords — UI + API (ADMIN only) |
 | Java SDK | Bulk evaluation, local caching, SSE live updates, typed remote config, never throws |
 | Bulk evaluation | Evaluate up to 100 flags in a single HTTP call |
 | Web UI | Built-in dashboard — flags, audit logs, webhooks, analytics |
@@ -358,6 +358,7 @@ atlas-flag/
 - [x] Immutable audit trail
 - [x] JWT authentication + RBAC (ADMIN · USER · VIEWER)
 - [x] User management API
+- [x] User management UI (create, edit, delete users, change passwords)
 - [x] Web UI dashboard (flags · audit logs · webhooks)
 - [x] Caffeine in-memory cache (no Redis needed)
 - [x] User attribute targeting (AND/OR rules, 11 operators)

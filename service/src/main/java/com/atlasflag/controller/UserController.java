@@ -56,6 +56,32 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(saved));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO dto) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
+
+        if (dto.getUsername() == null || dto.getUsername().isBlank()) {
+            throw new IllegalArgumentException("Username is required");
+        }
+        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+        if (!user.getUsername().equals(dto.getUsername()) && userRepository.existsByUsername(dto.getUsername())) {
+            throw new IllegalArgumentException("Username already exists: " + dto.getUsername());
+        }
+        if (!user.getEmail().equals(dto.getEmail()) && userRepository.existsByEmail(dto.getEmail())) {
+            throw new IllegalArgumentException("Email already exists: " + dto.getEmail());
+        }
+
+        user.setUsername(dto.getUsername());
+        user.setEmail(dto.getEmail());
+        if (dto.getRole() != null) user.setRole(dto.getRole());
+
+        User saved = userRepository.save(user);
+        return ResponseEntity.ok(toDTO(saved));
+    }
+
     @PutMapping("/{id}/password")
     public ResponseEntity<Map<String, String>> changePassword(
             @PathVariable Long id,

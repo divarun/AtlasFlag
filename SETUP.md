@@ -2,7 +2,7 @@
 
 ## Java Version Requirements
 
-This project requires **Java 21** (minimum Java 17).
+This project requires **Java 21**.
 
 ```bash
 java -version
