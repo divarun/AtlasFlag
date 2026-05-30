@@ -24,6 +24,9 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
       - name: Run SDK tests
         run: ./gradlew :atlas-flag-sdk-java:test
 

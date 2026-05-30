@@ -69,26 +69,24 @@ curl -X POST https://atlasflag-backend.onrender.com/api/v1/auth/login \
 
 ## Manual Render setup (without render.yaml)
 
-If you prefer to configure the Render service by hand:
+If you prefer to configure the Render service by hand instead of using `render.yaml`:
 
 | Field | Value |
 |---|---|
-| Runtime | Java |
-| Build Command | `./gradlew :atlas-flag-service:build -x test` |
-| Start Command | `java $JAVA_OPTS -jar service/build/libs/atlas-flag-service-1.0.0-SNAPSHOT.jar` |
+| Runtime | **Docker** |
+| Dockerfile Path | `./Dockerfile` (auto-detected) |
 | Health Check Path | `/actuator/health` |
 
 Environment variables to add manually:
 
 | Variable | Value |
 |---|---|
-| `JAVA_VERSION` | `21` |
-| `JAVA_OPTS` | `-Xmx400m -Xms200m -XX:+UseSerialGC` |
 | `DATABASE_URL` | Neon JDBC URL |
 | `DATABASE_USERNAME` | Neon username |
 | `DATABASE_PASSWORD` | Neon password |
 | `JWT_SECRET` | Random string, min 32 characters |
-| `PORT` | `8080` |
+
+`PORT` and `JAVA_OPTS` are set inside the Dockerfile — you don't need to add them manually.
 
 ---
 
