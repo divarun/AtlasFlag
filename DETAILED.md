@@ -896,7 +896,6 @@ Full step-by-step guide: **[DEPLOYMENT.md](DEPLOYMENT.md)**
 |---|---|---|
 | Backend | Render (free web service) | Free |
 | Database | Neon (serverless PostgreSQL) | Free |
-| Frontend | Vercel (static hosting) | Free |
 
 ### Backend — Render
 
@@ -926,12 +925,6 @@ JAVA_OPTS=-Xmx400m -Xms200m -XX:+UseSerialGC
 
 Create a free project at [neon.tech](https://neon.tech). Use the **JDBC** connection string format.
 The `?sslmode=require` suffix is mandatory for Neon connections.
-
-### Frontend — Vercel
-
-1. Set root directory to `frontend/` in Vercel project settings
-2. Edit `vercel.json` — replace `YOUR_RENDER_URL` with your Render service URL
-3. Push — Vercel deploys automatically on every commit
 
 ---
 

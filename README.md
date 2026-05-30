@@ -6,13 +6,11 @@
 [![Spring Boot 3.2](https://img.shields.io/badge/Spring%20Boot-3.2-brightgreen?logo=spring)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)](https://www.postgresql.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Render](https://img.shields.io/badge/Deploy-Render-46E3B7?logo=render)](https://render.com)
-
 ---
 
 ## What Is AtlasFlag?
 
-AtlasFlag is a **self-hosted feature flag and configuration management platform** built with Spring Boot and PostgreSQL. It gives engineering teams full control over feature releases without depending on third-party services like LaunchDarkly or Unleash.
+AtlasFlag is a **self-hosted feature flag and configuration management platform** built with Spring Boot and PostgreSQL. It gives engineering teams full control over feature releases without depending on third-party services.
 
 Use it to:
 - **Decouple deploys from releases** — ship code dark, turn it on when ready
@@ -58,7 +56,7 @@ Use it to:
 | Web UI | Built-in dashboard — flags, audit logs, webhooks, analytics |
 | REST API | Clean, versioned REST API (`/api/v1/...`) |
 | Self-hosted | Your data stays in your database |
-| Single-service deploy | Backend serves the dashboard — one Render web service is all you need |
+| Single-service deploy | Backend serves the dashboard — one deployment is all you need |
 
 ---
 
@@ -69,7 +67,7 @@ Use it to:
 - **Cache:** Caffeine (in-memory) — no external cache server required
 - **Frontend:** Vanilla JS · Tailwind CSS · Thymeleaf templates
 - **SDK:** Java · OkHttp · Caffeine
-- **Deploy:** Render (single web service — serves both dashboard and API)
+- **Deploy:** Any Docker-compatible host — one service serves both dashboard and API
 
 ---
 
@@ -91,13 +89,13 @@ open http://localhost:8080
 # Login: admin / admin123
 ```
 
-### Option B — Deploy free (Render + Neon)
+### Option B — Deploy to a cloud host
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the full guide. TL;DR:
 
-1. **Database:** Create free PostgreSQL at [neon.tech](https://neon.tech) — grab the JDBC connection string
-2. **Service:** Connect GitHub repo on [render.com](https://render.com) — it reads `render.yaml` automatically, set DB env vars
-3. Open `https://your-service.onrender.com/dashboard` — the Spring Boot app serves everything
+1. **Database:** Provision a PostgreSQL instance — grab the JDBC connection string
+2. **Service:** Build the Docker image (`docker build -t atlasflag .`) and deploy — set the required env vars
+3. Open `https://your-host/dashboard` — the Spring Boot app serves everything
 
 ---
 
@@ -192,7 +190,7 @@ dependencies {
 ```yaml
 # application.yml
 atlasflag:
-  base-url: https://your-backend.onrender.com
+  base-url: https://your-atlasflag-host.com
   environment: PRODUCTION
   cache:
     ttl-seconds: 60
@@ -248,7 +246,7 @@ dependencies {
 
 ```java
 AtlasFlagClient client = new AtlasFlagClient.Builder()
-    .baseUrl("https://your-backend.onrender.com")
+    .baseUrl("https://your-atlasflag-host.com")
     .environment("PRODUCTION")
     .cacheTtlSeconds(60)   // evaluated values cached locally for 60s
     .build();
@@ -303,7 +301,7 @@ Full architecture → [DETAILED.md](DETAILED.md#architecture)
 | `CORS_ALLOWED_ORIGINS` | Prod | localhost | Comma-separated allowed origins |
 | `PORT` | No | `8080` | HTTP port |
 | `DB_POOL_SIZE` | No | `5` | HikariCP max connections |
-| `DB_SSL_MODE` | No | `prefer` | Set to `require` for Neon/cloud Postgres |
+| `DB_SSL_MODE` | No | `prefer` | Set to `require` for cloud PostgreSQL providers |
 
 ---
 
@@ -328,15 +326,13 @@ atlas-flag/
 ├── service/                    # Spring Boot backend
 │   ├── src/main/java/          # Application code
 │   ├── src/main/resources/
-│   │   ├── templates/          # Thymeleaf HTML (dashboard, audit, login)
+│   │   ├── templates/          # Thymeleaf HTML (dashboard, login)
 │   │   ├── static/js/app.js    # Frontend JS
 │   │   └── db/migration/       # Flyway SQL migrations
 │   └── build.gradle
 ├── sdk-java/                   # Java client SDK
-├── frontend/                   # Static files for Vercel deployment
 ├── infra/
 │   └── docker-compose.yml      # PostgreSQL for local dev
-├── vercel.json                 # Vercel frontend config + API proxy
 ├── CLAUDE.md                   # AI assistant context + project commands
 ├── DETAILED.md                 # Full technical documentation
 ├── QUICKSTART.md               # 5-minute setup guide

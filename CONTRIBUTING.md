@@ -73,8 +73,6 @@ AtlasFlag/
 │       └── db/migration/            # Flyway SQL migrations (V1–V3 applied, add V4+)
 ├── sdk-java/                        # Java client SDK
 ├── starter-spring-boot/             # Spring Boot auto-configuration starter
-├── frontend/                        # Static copy of templates/ for Vercel deployment
-│   └── js/app.js                    # Kept in sync with static/js/app.js
 └── infra/
     └── docker-compose.yml           # Local PostgreSQL
 ```
@@ -185,9 +183,7 @@ Docker must be running — service tests use Testcontainers to spin up a real Po
 
 4. **Check the invariants** (see below) — particularly cache eviction, audit logging, and security rules
 
-5. **If you changed templates or `app.js`**, sync the `frontend/` directory (see above)
-
-6. **Open a PR** against `main` with:
+5. **Open a PR** against `main` with:
    - A clear title describing the change (not "fix stuff" or "updates")
    - A short description of what changed and why
    - Steps to test manually if the change touches the UI or API
