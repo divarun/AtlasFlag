@@ -65,11 +65,23 @@ class AtlasFlagClientTest {
 
     @Test
     void isEnabled_serviceUnreachable_returnsDefault() throws IOException {
-        server.shutdown(); // close the server to simulate unreachable
+        // Use an isolated server/client so tearDown's server.shutdown() still works.
+        // MockWebServer cannot be restarted after shutdown().
+        MockWebServer deadServer = new MockWebServer();
+        deadServer.start();
+        String url = deadServer.url("/").toString();
+        deadServer.shutdown(); // now unreachable
 
-        // Should not throw — returns the default
-        assertThat(client.isEnabled("my-flag", true)).isTrue();
-        server.start(); // restart for tearDown
+        AtlasFlagClient isolatedClient = new AtlasFlagClient.Builder()
+            .baseUrl(url)
+            .environment("TEST")
+            .cacheEnabled(false)
+            .build();
+        try {
+            assertThat(isolatedClient.isEnabled("my-flag", true)).isTrue();
+        } finally {
+            isolatedClient.shutdown();
+        }
     }
 
     @Test
