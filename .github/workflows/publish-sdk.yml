@@ -1,0 +1,45 @@
+name: Publish to GitHub Packages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sdk-java/**'
+      - 'starter-spring-boot/**'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Run SDK tests
+        run: ./gradlew :atlas-flag-sdk-java:test
+
+      - name: Run starter tests
+        run: ./gradlew :atlas-flag-spring-boot-starter:test
+
+      - name: Publish SDK to GitHub Packages
+        run: ./gradlew :atlas-flag-sdk-java:publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: Publish Spring Boot Starter to GitHub Packages
+        run: ./gradlew :atlas-flag-spring-boot-starter:publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}

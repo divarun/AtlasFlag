@@ -9,8 +9,10 @@ public class FlagEvaluationRequest {
     
     private String environment = "default";
     
-    private String userId; // For percentage-based rollouts
-    
+    private String userId;
+
+    private java.util.Map<String, String> attributes;
+
     // Getters and Setters
     public String getFlagKey() {
         return flagKey;
@@ -31,8 +33,16 @@ public class FlagEvaluationRequest {
     public String getUserId() {
         return userId;
     }
-    
+
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public java.util.Map<String, String> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(java.util.Map<String, String> attributes) {
+        this.attributes = attributes;
     }
 }

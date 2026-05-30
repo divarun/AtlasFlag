@@ -1,0 +1,85 @@
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'maven-publish'
+}
+
+description = 'Spring Boot auto-configuration starter for AtlasFlag'
+
+java {
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+    withSourcesJar()
+    withJavadocJar()
+}
+
+// Versions aligned with the service module's Spring Boot 3.2.0 stack
+ext {
+    springBootVersion   = '3.2.0'
+    springVersion       = '6.1.0'
+    springSecVersion    = '6.2.0'
+    aspectjVersion      = '1.9.21'
+}
+
+dependencies {
+    // SDK — transitively included for users of this starter
+    api(project(':atlas-flag-sdk-java'))
+
+    // Spring Boot auto-configuration — provided by the consuming app at runtime
+    compileOnly "org.springframework.boot:spring-boot-autoconfigure:${springBootVersion}"
+    compileOnly "org.springframework.boot:spring-boot:${springBootVersion}"
+    compileOnly 'org.slf4j:slf4j-api:2.0.9'
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${springBootVersion}"
+
+    // AOP — optional. Add spring-boot-starter-aop to your app to use @FeatureFlag.
+    compileOnly "org.aspectj:aspectjweaver:${aspectjVersion}"
+    compileOnly "org.springframework:spring-aop:${springVersion}"
+
+    // Spring Security — optional. Enables SecurityContextUserIdProvider.
+    compileOnly "org.springframework.security:spring-security-core:${springSecVersion}"
+
+    // Tests
+    testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+    testImplementation "org.springframework.boot:spring-boot-starter-aop:${springBootVersion}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.9'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+javadoc.options.addStringOption('Xdoclint:none', '-quiet')
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            groupId = 'com.atlasflag'
+            artifactId = 'atlas-flag-spring-boot-starter'
+
+            pom {
+                name = 'AtlasFlag Spring Boot Starter'
+                description = 'Spring Boot auto-configuration for the AtlasFlag feature flag service'
+                url = 'https://github.com/divarun/AtlasFlag'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri("https://maven.pkg.github.com/${System.getenv('GITHUB_REPOSITORY') ?: 'divarun/AtlasFlag'}")
+            credentials {
+                username = System.getenv('GITHUB_ACTOR')
+                password = System.getenv('GITHUB_TOKEN')
+            }
+        }
+    }
+}

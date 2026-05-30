@@ -1,108 +1,260 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Atlas Flag</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>AtlasFlag — Sign In</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        .spinner {
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 2px solid white;
-            width: 16px;
-            height: 16px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 8px;
-            vertical-align: middle;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --page:    #EDF0F4;
+            --surface: #FFFFFF;
+            --border:  #DDE0E9;
+            --teal:    #0B7067;
+            --teal-bg: #E8F5F4;
+            --text-1:  #0C1A2E;
+            --text-2:  #526070;
+            --text-3:  #96A3B4;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--page);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Subtle grid pattern on background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: .35;
+            pointer-events: none;
+        }
+
+        .card {
+            position: relative;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 4px 32px rgba(12,26,46,.08), 0 1px 4px rgba(12,26,46,.06);
+            width: 100%;
+            max-width: 380px;
+            overflow: hidden;
+            animation: cardUp .3s ease both;
+        }
+
+        @keyframes cardUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+
+        .card-header {
+            padding: 28px 28px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo-mark {
+            width: 44px;
+            height: 44px;
+            background: var(--teal);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(11,112,103,.25);
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-1);
+            letter-spacing: -.02em;
+            margin-bottom: 3px;
+        }
+
+        .subtitle { font-size: 13px; color: var(--text-3); }
+
+        .card-body { padding: 24px 28px 28px; }
+
+        .field-group { margin-bottom: 16px; }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--text-2);
+            margin-bottom: 7px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 13px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            font-size: 14px;
+            font-family: 'DM Sans', sans-serif;
+            color: var(--text-1);
+            background: var(--surface);
+            outline: none;
+            transition: border-color .12s, box-shadow .12s;
+        }
+        input::placeholder { color: var(--text-3); }
+        input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(11,112,103,.1); }
+
+        #error {
+            display: none;
+            align-items: flex-start;
+            gap: 9px;
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            border-radius: 9px;
+            padding: 11px 13px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #991B1B;
+            line-height: 1.5;
+        }
+        #error.show { display: flex; }
+        #error svg { flex-shrink: 0; margin-top: 1px; }
+
+        .submit-btn {
+            width: 100%;
+            background: var(--teal);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity .12s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .submit-btn:hover { opacity: .88; }
+        .submit-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner {
+            width: 15px; height: 15px;
+            border: 2px solid rgba(255,255,255,.35);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin .65s linear infinite;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-3);
+            margin-top: 20px;
+            letter-spacing: .01em;
+        }
     </style>
 </head>
-<body class="bg-gray-100 font-sans">
-<div class="min-h-screen flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-md w-96 border border-gray-200">
-        <h1 class="text-2xl font-bold mb-2 text-center text-blue-600">Atlas Flag</h1>
-        <p class="text-sm text-gray-500 text-center mb-6">Feature Flag Manager</p>
+<body>
 
-        <form id="loginForm" class="space-y-4">
-            <div>
-                <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-                <input type="text" id="username" name="username" required
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-600 focus:ring focus:ring-blue-200 px-3 py-2"
-                       placeholder="Enter username">
-            </div>
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                <input type="password" id="password" name="password" required
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-600 focus:ring focus:ring-blue-200 px-3 py-2"
-                       placeholder="••••••••">
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <div class="logo-mark">
+                    <svg width="22" height="22" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                        <line x1="4" y1="22" x2="4" y2="15" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h1>AtlasFlag</h1>
+                <p class="subtitle">Sign in to your workspace</p>
             </div>
 
-            <div id="error" class="text-red-600 text-sm bg-red-50 p-2 rounded border border-red-200 hidden"></div>
+            <div class="card-body">
+                <form id="loginForm" novalidate>
+                    <div id="error">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4m0 4h.01"/></svg>
+                        <span id="errorText"></span>
+                    </div>
 
-            <button type="submit" id="submitBtn"
-                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-semibold transition-colors">
-                <span id="btnText">Login</span>
-            </button>
-        </form>
+                    <div class="field-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required autocomplete="username" placeholder="admin">
+                    </div>
+                    <div class="field-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••">
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="submit-btn">
+                        <span id="btnText">Sign in</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <p class="footer-note">Self-hosted &nbsp;·&nbsp; Open source</p>
     </div>
-</div>
 
 <script>
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    const form = document.getElementById('loginForm');
+    const errorDiv = document.getElementById('error');
+    const errorText = document.getElementById('errorText');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+
+    function showError(msg) {
+        errorText.textContent = msg;
+        errorDiv.classList.add('show');
+    }
+    function setLoading(on) {
+        submitBtn.disabled = on;
+        btnText.innerHTML = on ? '<span class="spinner"></span> Signing in…' : 'Sign in';
+    }
+
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        errorDiv.classList.remove('show');
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        if (!username || !password) { showError('Please enter your username and password.'); return; }
 
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const errorDiv = document.getElementById('error');
-        const submitBtn = document.getElementById('submitBtn');
-        const btnText = document.getElementById('btnText');
-
-        const username = usernameInput.value.trim();
-        const password = passwordInput.value.trim();
-
-        errorDiv.classList.add('hidden');
-        submitBtn.disabled = true;
-        btnText.innerHTML = '<span class="spinner"></span>Logging in...';
-
-        if (!username || !password) {
-            errorDiv.textContent = 'Username and password cannot be empty.';
-            errorDiv.classList.remove('hidden');
-            submitBtn.disabled = false;
-            btnText.textContent = 'Login';
-            return;
-        }
-
+        setLoading(true);
         try {
-            const response = await fetch('/api/v1/auth/login', {
+            const res = await fetch('/api/v1/auth/login', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
-
-            let data;
-            try { data = await response.json(); } catch { data = {}; }
-
-            if (response.ok && data.token) {
+            let data = {};
+            try { data = await res.json(); } catch {}
+            if (res.ok && data.token) {
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('username', data.username || username);
                 window.location.href = '/dashboard';
             } else {
-                errorDiv.textContent = data.message || 'Invalid username or password';
-                errorDiv.classList.remove('hidden');
+                showError(data.message || 'Incorrect username or password.');
             }
-        } catch (err) {
-            console.error('Login Error:', err);
-            errorDiv.textContent = 'Connection failed. Please check if the server is running.';
-            errorDiv.classList.remove('hidden');
+        } catch {
+            showError('Connection failed. Make sure the server is running.');
         } finally {
-            submitBtn.disabled = false;
-            btnText.textContent = 'Login';
+            setLoading(false);
         }
     });
 </script>

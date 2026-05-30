@@ -1,176 +1,128 @@
 # Quick Start Guide
 
+Get AtlasFlag running locally in under 5 minutes.
+
 ## Prerequisites
 
-- **Java 17 or higher** (Java 21 recommended)
-  - ⚠️ **CRITICAL:** JAVA_HOME must point to Java 17+. 
-  - Check with: `java -version`
-  - If you see Java 8 or lower, see [SETUP.md](SETUP.md) for setup instructions
-- Gradle 8.5+ (or use Gradle Wrapper - included)
-- Docker and Docker Compose
+- **Java 21** — [Download from Adoptium](https://adoptium.net/)
+  - Verify: `java -version` must show 21+
+  - Set `JAVA_HOME` if needed — see [SETUP.md](SETUP.md)
+- **Docker** — for PostgreSQL
 
-## Step 1: Start Infrastructure
+## Step 1: Start PostgreSQL
 
 ```bash
 cd infra
 docker-compose up -d
+cd ..
 ```
 
-This starts:
-- PostgreSQL on port 5432
-- Redis on port 6379
+This starts PostgreSQL on port 5432. No Redis required.
 
-## Step 2: Build and Run Service
+## Step 2: Start the Service
 
 ```bash
-# From project root
-./gradlew :service:bootRun
-
-# Or from service directory
-cd service
-../gradlew bootRun
+./gradlew :atlas-flag-service:bootRun
 ```
 
-The service will start on `http://localhost:8080`
+Wait for `Started AtlasFlagApplication` in the logs (~10 seconds).
 
-## Step 3: Verify Service
+## Step 3: Open the Dashboard
+
+Navigate to [http://localhost:8080](http://localhost:8080)
+
+**Default login:**
+- Username: `admin`
+- Password: `admin123`
+
+Or use the API directly:
 
 ```bash
-# Health check
-curl http://localhost:8080/actuator/health
-
-# Create a user first (via database)
-# Connect to PostgreSQL and run:
-# psql -h localhost -U atlasflag -d atlasflag
-# INSERT INTO users (username, email, role) VALUES ('admin', 'admin@example.com', 'ADMIN');
-
-# Get JWT token (username must exist in database)
-curl -X POST http://localhost:8080/api/v1/auth/login \
+# Get a JWT token
+curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": ""}'
-  
-# Note: For MVP, password validation is not yet implemented.
-# The username must exist in the users table.
+  -d '{"username":"admin","password":"admin123"}' | python3 -m json.tool
+
+# Save the token
+TOKEN="paste-your-token-here"
 ```
 
-## Step 4: Create a Feature Flag
+## Step 4: Create Your First Flag
 
 ```bash
-# Replace TOKEN with the token from step 3
-TOKEN="your-jwt-token"
-
 curl -X POST http://localhost:8080/api/v1/flags \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "flagKey": "new-feature",
     "name": "New Feature",
-    "description": "Enable new feature",
+    "description": "My first feature flag",
+    "environment": "DEVELOPMENT",
     "enabled": true,
-    "environment": "default",
+    "rolloutPercentage": 100,
     "defaultValue": false
   }'
 ```
 
-## Step 5: Evaluate a Flag
+## Step 5: Evaluate the Flag
 
 ```bash
-# Public endpoint - no auth required
+# Public — no auth required
 curl -X POST http://localhost:8080/api/v1/flags/evaluate \
   -H "Content-Type: application/json" \
-  -d '{
-    "flagKey": "new-feature",
-    "environment": "default",
-    "userId": "user123"
-  }'
+  -d '{"flagKey":"new-feature","environment":"DEVELOPMENT","userId":"user-1"}'
 ```
 
-## Step 6: Use the SDK
-
-Add the SDK to your project:
-
-**Gradle:**
-```gradle
-dependencies {
-    implementation 'com.atlasflag:atlas-flag-sdk-java:1.0.0-SNAPSHOT'
-}
+Response:
+```json
+{"flagKey":"new-feature","enabled":true,"reason":"FLAG_ENABLED"}
 ```
 
-**Maven:**
-```xml
-<dependency>
-    <groupId>com.atlasflag</groupId>
-    <artifactId>atlas-flag-sdk-java</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-</dependency>
+## Step 6: Toggle Off (Emergency Kill Switch)
+
+```bash
+curl -X POST "http://localhost:8080/api/v1/flags/new-feature/toggle?environment=DEVELOPMENT" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-Then use it:
+## Step 7: Use the Java SDK
 
 ```java
-import com.atlasflag.sdk.AtlasFlagClient;
-
-// Create client
 AtlasFlagClient client = new AtlasFlagClient.Builder()
     .baseUrl("http://localhost:8080")
-    .environment("default")
+    .environment("DEVELOPMENT")
     .cacheEnabled(true)
     .build();
 
-// Evaluate flag
-boolean enabled = client.isEnabled("new-feature", "user123", false);
+boolean enabled = client.isEnabled("new-feature", "user-1", false);
+System.out.println("Feature enabled: " + enabled);
 
-if (enabled) {
-    // Feature is enabled
-    System.out.println("New feature is enabled!");
-} else {
-    // Feature is disabled
-    System.out.println("New feature is disabled");
-}
-
-// Cleanup
 client.shutdown();
 ```
 
 ## Common Operations
 
-### Toggle a Flag
-
 ```bash
-curl -X POST "http://localhost:8080/api/v1/flags/new-feature/toggle?environment=default" \
+# List flags in an environment
+curl "http://localhost:8080/api/v1/flags?environment=DEVELOPMENT" \
   -H "Authorization: Bearer $TOKEN"
-```
 
-### List All Flags
-
-```bash
-curl http://localhost:8080/api/v1/flags?environment=default \
+# View audit log for a flag (requires ADMIN role)
+curl "http://localhost:8080/api/v1/audit/user/admin" \
   -H "Authorization: Bearer $TOKEN"
-```
 
-### View Audit Logs
-
-```bash
-curl "http://localhost:8080/api/v1/audit/entity/FeatureFlag/1" \
-  -H "Authorization: Bearer $TOKEN"
+# Health check
+curl http://localhost:8080/actuator/health
 ```
 
 ## Troubleshooting
 
-### Service won't start
-- Check that PostgreSQL and Redis are running: `docker ps`
-- Check logs: `docker-compose logs`
+| Problem | Fix |
+|---|---|
+| Service won't start | Check `java -version` is 21+ |
+| DB connection error | Check `docker ps \| grep postgres` |
+| 401 on all requests | Token expired — log in again |
+| 403 on audit endpoints | Your user needs `ADMIN` role |
 
-### Database connection errors
-- Verify PostgreSQL is running: `docker ps | grep postgres`
-- Check connection: `psql -h localhost -U atlasflag -d atlasflag`
-
-### Redis connection errors
-- Verify Redis is running: `docker ps | grep redis`
-- Test connection: `redis-cli ping`
-
-## Next Steps
-
-- Read the [README.md](README.md) for more details
-- Check [docs/architecture.md](docs/architecture.md) for system design
-- Review [docs/prd.md](docs/prd.md) for product requirements
+For setup help → [SETUP.md](SETUP.md)
+For full API reference → [DETAILED.md](DETAILED.md)

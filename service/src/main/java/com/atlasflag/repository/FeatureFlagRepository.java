@@ -11,17 +11,19 @@ import java.util.Optional;
 
 @Repository
 public interface FeatureFlagRepository extends JpaRepository<FeatureFlag, Long> {
-    
+
     Optional<FeatureFlag> findByFlagKey(String flagKey);
-    
+
     Optional<FeatureFlag> findByFlagKeyAndEnvironment(String flagKey, String environment);
-    
+
     List<FeatureFlag> findByEnvironment(String environment);
-    
+
+    List<FeatureFlag> findByEnvironmentAndFlagKeyContainingIgnoreCase(String environment, String flagKey);
+
     @Query("SELECT f FROM FeatureFlag f WHERE f.environment = :environment AND f.enabled = true")
     List<FeatureFlag> findEnabledFlagsByEnvironment(@Param("environment") String environment);
-    
+
     boolean existsByFlagKey(String flagKey);
-    
+
     boolean existsByFlagKeyAndEnvironment(String flagKey, String environment);
 }

@@ -46,7 +46,16 @@ public class FeatureFlag {
     
     @Column(name = "default_value")
     private Boolean defaultValue = false;
-    
+
+    @Column(name = "flag_type", nullable = false)
+    private String flagType = "BOOLEAN";
+
+    @Column(name = "string_value", columnDefinition = "TEXT")
+    private String stringValue;
+
+    @Column(name = "targeting_rules", columnDefinition = "TEXT")
+    private String targetingRules;
+
     @Column(name = "created_by", nullable = false)
     private String createdBy;
     
@@ -133,11 +142,35 @@ public class FeatureFlag {
     public Boolean getDefaultValue() {
         return defaultValue;
     }
-    
+
     public void setDefaultValue(Boolean defaultValue) {
         this.defaultValue = defaultValue;
     }
-    
+
+    public String getFlagType() {
+        return flagType;
+    }
+
+    public void setFlagType(String flagType) {
+        this.flagType = flagType;
+    }
+
+    public String getStringValue() {
+        return stringValue;
+    }
+
+    public void setStringValue(String stringValue) {
+        this.stringValue = stringValue;
+    }
+
+    public String getTargetingRules() {
+        return targetingRules;
+    }
+
+    public void setTargetingRules(String targetingRules) {
+        this.targetingRules = targetingRules;
+    }
+
     public String getCreatedBy() {
         return createdBy;
     }

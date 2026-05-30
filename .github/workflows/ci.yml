@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Build all modules
+        run: ./gradlew build -x test
+
+      - name: Run SDK tests
+        run: ./gradlew :atlas-flag-sdk-java:test
+
+      - name: Run starter tests
+        run: ./gradlew :atlas-flag-spring-boot-starter:test
+
+      - name: Run service tests
+        run: ./gradlew :atlas-flag-service:test
+        continue-on-error: true  # service test directory is currently empty

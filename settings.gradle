@@ -2,6 +2,14 @@ rootProject.name = 'atlas-flag'
 
 include 'service'
 include 'sdk-java'
+include 'starter-spring-boot'
 
-project(':service').name = 'atlas-flag-service'
-project(':sdk-java').name = 'atlas-flag-sdk-java'
+// Project names (used as Maven artifactId and Gradle project paths in Gradle 8+)
+project(':service').name          = 'atlas-flag-service'
+project(':sdk-java').name         = 'atlas-flag-sdk-java'
+project(':starter-spring-boot').name = 'atlas-flag-spring-boot-starter'
+
+// NOTE: In Gradle 8+, renaming a project changes its path too.
+// Reference subprojects using the new name, e.g.:
+//   project(':atlas-flag-sdk-java')      (not ':sdk-java')
+//   project(':atlas-flag-spring-boot-starter')

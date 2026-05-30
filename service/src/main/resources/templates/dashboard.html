@@ -2,101 +2,621 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard - Atlas Flag</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AtlasFlag</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --page:    #EDF0F4;
+            --surface: #FFFFFF;
+            --border:  #DDE0E9;
+            --teal:    #0B7067;
+            --teal-bg: #E8F5F4;
+            --text-1:  #0C1A2E;
+            --text-2:  #526070;
+            --text-3:  #96A3B4;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--page);
+            color: var(--text-1);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Sidebar ─────────────────────────────────────────────────────── */
+        #sidebar {
+            position: fixed;
+            left: 0; top: 0; bottom: 0;
+            width: 232px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 40;
+            transition: transform .24s cubic-bezier(.4,0,.2,1);
+        }
+        #main { margin-left: 232px; min-height: 100vh; padding: 32px 36px; }
+
+        /* ── Nav items ────────────────────────────────────────────────────── */
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--text-2);
+            cursor: pointer;
+            transition: color .12s, background .12s;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            white-space: nowrap;
+            line-height: 1.3;
+        }
+        .nav-item:hover { color: var(--text-1); background: var(--page); }
+        .nav-active { color: var(--teal) !important; background: var(--teal-bg) !important; }
+        .nav-active svg { color: var(--teal); }
+
+        /* ── Environment segmented control ───────────────────────────────── */
+        .env-bar { display: inline-flex; background: var(--page); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 2px; }
+        .env-btn { padding: 6px 16px; border-radius: 7px; font-size: 12.5px; font-weight: 500; color: var(--text-2); background: transparent; border: none; cursor: pointer; transition: all .12s; white-space: nowrap; }
+        .env-btn:hover { color: var(--text-1); background: rgba(255,255,255,.7); }
+        .env-active { color: var(--teal) !important; background: var(--surface) !important; box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 0 0 1px var(--border) !important; }
+
+        /* ── Toggle ──────────────────────────────────────────────────────── */
+        .tog { cursor: pointer; flex-shrink: 0; }
+        .tog-t { width: 38px; height: 22px; border-radius: 11px; background: var(--border); transition: background .18s; position: relative; }
+        .tog-t.on { background: var(--teal); }
+        .tog-t::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .18s; }
+        .tog-t.on::after { transform: translateX(16px); }
+
+        /* ── Skeleton ────────────────────────────────────────────────────── */
+        @keyframes sk { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .sk { background: #E9ECF2; border-radius: 5px; animation: sk 1.7s ease-in-out infinite; }
+
+        /* ── Sheet / slide-up ────────────────────────────────────────────── */
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .sheet { animation: slideUp .26s cubic-bezier(.32,.72,0,1); }
+
+        /* ── Toast ───────────────────────────────────────────────────────── */
+        @keyframes toastIn { from { opacity:0; transform:translateX(12px); } to { opacity:1; transform:translateX(0); } }
+        .toast-el { animation: toastIn .2s ease; }
+
+        /* ── Fade-in ─────────────────────────────────────────────────────── */
+        @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+        .fade-in { animation: fadeIn .18s ease both; }
+
+        /* ── Form fields ─────────────────────────────────────────────────── */
+        .field {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-family: 'DM Sans', sans-serif;
+            color: var(--text-1);
+            background: var(--surface);
+            outline: none;
+            transition: border-color .12s, box-shadow .12s;
+        }
+        .field::placeholder { color: var(--text-3); }
+        .field:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(11,112,103,.1); }
+        select.field {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2396A3B4'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 16px;
+            padding-right: 36px;
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        textarea.field { resize: vertical; }
+
+        /* ── Data table ──────────────────────────────────────────────────── */
+        .dtable { width: 100%; border-collapse: collapse; }
+        .dtable th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--text-3); border-bottom: 1px solid var(--border); background: #F8F9FB; }
+        .dtable td { padding: 13px 16px; font-size: 13px; color: var(--text-2); border-bottom: 1px solid #F0F2F7; }
+        .dtable tr:last-child td { border-bottom: none; }
+        .dtable tbody tr:hover td { background: #FAFBFD; }
+
+        /* ── Action button ───────────────────────────────────────────────── */
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: var(--teal); color: #fff;
+            padding: 9px 18px; border-radius: 9px;
+            font-size: 13.5px; font-weight: 600; border: none; cursor: pointer;
+            transition: opacity .12s; flex-shrink: 0;
+        }
+        .btn-primary:hover { opacity: .88; }
+
+        .btn-ghost {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: transparent; color: var(--text-2);
+            padding: 8px 16px; border-radius: 9px;
+            font-size: 13.5px; font-weight: 500;
+            border: 1px solid var(--border); cursor: pointer;
+            transition: background .12s, color .12s;
+        }
+        .btn-ghost:hover { background: var(--page); color: var(--text-1); }
+
+        /* ── Modal ───────────────────────────────────────────────────────── */
+        .modal-box { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,.12); }
+
+        /* ── Misc ────────────────────────────────────────────────────────── */
+        .mono { font-family: 'DM Mono', monospace; }
+        .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .pb-safe { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+        input[type="range"] { accent-color: var(--teal); }
+        input[type="checkbox"] { accent-color: var(--teal); }
+
+        /* ── Mobile ──────────────────────────────────────────────────────── */
+        #mobileHeader { display: none; }
+        @media (max-width: 768px) {
+            #sidebar { transform: translateX(-100%); }
+            #sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,.12); }
+            #sidebarOverlay.open { display: block; }
+            #main { margin-left: 0; padding: 16px; padding-top: 0; }
+            #mobileHeader { display: flex; position: sticky; top: 0; z-index: 30; background: var(--surface); border-bottom: 1px solid var(--border); align-items: center; padding: 12px 16px; gap: 12px; margin-bottom: 16px; }
+        }
+
+        #sidebarOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 39; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans">
-<div class="min-h-screen">
+<body>
 
-    <!-- Header -->
-    <header class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-blue-600">Atlas Flag</h1>
-            <div class="flex items-center gap-4">
-                <span id="usernameDisplay" class="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full"></span>
-                <button onclick="logout()"
-                        class="text-sm bg-red-50 text-red-600 px-4 py-2 rounded hover:bg-red-100 transition-colors">
-                    Logout
-                </button>
-            </div>
-        </div>
-    </header>
+<div id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-    <!-- Main -->
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        <section id="flagsSection">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-semibold text-gray-800">Feature Flags</h2>
-                <button onclick="showCreateModal()"
-                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
-                    + Create Flag
-                </button>
-            </div>
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Key</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Env</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rollout</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody id="flagsTable" class="divide-y divide-gray-200"></tbody>
-                </table>
-            </div>
-        </section>
-    </main>
+<!-- Mobile header -->
+<div id="mobileHeader">
+    <button onclick="openSidebar()" style="padding:6px;border-radius:7px;border:none;background:transparent;cursor:pointer;color:var(--text-2)">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <span style="font-size:14px;font-weight:600;color:var(--text-1)">AtlasFlag</span>
+    <span id="sseDotMobile" style="width:7px;height:7px;border-radius:50%;background:var(--text-3);margin-left:auto;flex-shrink:0"></span>
 </div>
 
-<!-- Flag Modal -->
-<div id="flagModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl p-8 max-w-lg w-full">
-        <h2 id="modalTitle" class="text-xl font-bold mb-4 text-blue-600">Create Feature Flag</h2>
-        <form id="flagForm" class="space-y-4">
-            <input type="hidden" id="flagId">
-            <div>
-                <label class="text-sm font-medium">Flag Key</label>
-                <input id="flagKey" required class="w-full border-gray-300 border px-3 py-2 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-600">
+<!-- Sidebar -->
+<aside id="sidebar">
+    <!-- Logo -->
+    <div style="padding:20px 18px 16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:9px;background:var(--teal);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="16" height="16" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                    <line x1="4" y1="22" x2="4" y2="15" stroke-linecap="round"/>
+                </svg>
             </div>
             <div>
-                <label class="text-sm font-medium">Name</label>
-                <input id="flagName" required class="w-full border-gray-300 border px-3 py-2 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-600">
+                <div style="font-size:14px;font-weight:700;color:var(--text-1);letter-spacing:-.01em">AtlasFlag</div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:1px">Feature flag service</div>
             </div>
+        </div>
+    </div>
+
+    <!-- Nav -->
+    <nav style="flex:1;padding:12px 10px;overflow-y:auto">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);padding:4px 12px 8px">Navigation</div>
+
+        <button id="tabFlags" onclick="showTab('flags')" class="nav-item nav-active">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="flex-shrink:0">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                <line x1="4" y1="22" x2="4" y2="15" stroke-linecap="round"/>
+            </svg>
+            Feature Flags
+        </button>
+        <button id="tabAudit" onclick="showTab('audit')" class="nav-item">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="flex-shrink:0">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Audit Log
+        </button>
+        <button id="tabWebhooks" onclick="showTab('webhooks')" class="nav-item">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="flex-shrink:0">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+            Webhooks
+        </button>
+    </nav>
+
+    <!-- Footer -->
+    <div style="padding:10px;border-top:1px solid var(--border)">
+        <!-- SSE status -->
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:7px">
+            <span id="sseDot" style="width:7px;height:7px;border-radius:50%;background:var(--text-3);flex-shrink:0"></span>
+            <span id="sseStatus" style="font-size:12px;color:var(--text-3)">Connecting</span>
+        </div>
+
+        <!-- User menu -->
+        <div style="position:relative">
+            <button id="userMenuBtn" onclick="toggleUserMenu()" class="nav-item" style="margin-top:2px">
+                <div id="userAvatar" style="width:24px;height:24px;border-radius:6px;background:var(--teal-bg);color:var(--teal);border:1px solid rgba(11,112,103,.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">A</div>
+                <span id="usernameDisplay" style="flex:1;font-size:13px;text-align:left;overflow:hidden;text-overflow:ellipsis"></span>
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;color:var(--text-3)"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="userMenu" class="hidden" style="position:absolute;bottom:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:50">
+                <div id="userMenuName" style="padding:8px 14px;font-size:11px;color:var(--text-3);border-bottom:1px solid var(--border)"></div>
+                <button onclick="logout()" style="width:100%;text-align:left;padding:10px 14px;font-size:13px;color:#DC2626;background:transparent;border:none;cursor:pointer;transition:background .12s" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='transparent'">Sign out</button>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- Main content -->
+<main id="main">
+
+    <!-- ── Feature Flags ───────────────────────────────────────────────── -->
+    <section id="flagsSection">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px">
             <div>
-                <label class="text-sm font-medium">Description</label>
-                <textarea id="flagDescription" rows="3" class="w-full border-gray-300 border px-3 py-2 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-600"></textarea>
+                <h1 style="font-size:20px;font-weight:700;color:var(--text-1);letter-spacing:-.02em">Feature Flags</h1>
+                <p style="font-size:13px;color:var(--text-3);margin-top:3px">Manage flag states across all environments</p>
             </div>
+            <button onclick="showCreateModal()" class="btn-primary">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <span class="hidden sm:inline">New Flag</span>
+            </button>
+        </div>
+
+        <!-- Env tabs + Search -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+            <div class="env-bar">
+                <button data-env="DEVELOPMENT" onclick="changeEnvironment('DEVELOPMENT')" class="env-btn env-active">Development</button>
+                <button data-env="STAGING" onclick="changeEnvironment('STAGING')" class="env-btn">Staging</button>
+                <button data-env="PRODUCTION" onclick="changeEnvironment('PRODUCTION')" class="env-btn">Production</button>
+            </div>
+            <div style="position:relative;flex:1;min-width:180px">
+                <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-3)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+                <input id="flagSearch" type="text" placeholder="Search flags…" oninput="debouncedLoadFlags()"
+                       class="field" style="padding-left:34px;padding-top:8px;padding-bottom:8px;font-size:13px">
+            </div>
+        </div>
+
+        <div id="flagsList" class="space-y-2"></div>
+    </section>
+
+    <!-- ── Audit Log ───────────────────────────────────────────────────── -->
+    <section id="auditSection" class="hidden">
+        <div style="margin-bottom:24px">
+            <h1 style="font-size:20px;font-weight:700;color:var(--text-1);letter-spacing:-.02em">Audit Log</h1>
+            <p style="font-size:13px;color:var(--text-3);margin-top:3px">Immutable record of all flag changes</p>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px">
+                <input type="text" id="entityTypeFilter" placeholder="Entity type (e.g. FeatureFlag)" class="field" style="font-size:13px">
+                <input type="number" id="entityIdFilter" placeholder="Entity ID" class="field" style="font-size:13px">
+                <input type="text" id="userIdFilter" placeholder="Username" class="field" style="font-size:13px">
+            </div>
+            <button onclick="currentPage=0;loadAuditLogs()" class="btn-primary" style="padding:8px 16px;font-size:13px">Apply Filter</button>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+            <div style="overflow-x:auto">
+                <table class="dtable">
+                    <thead>
+                    <tr>
+                        <th>Time</th><th>Entity</th><th>Action</th>
+                        <th class="hidden sm:table-cell">User</th>
+                        <th class="hidden md:table-cell">IP</th>
+                        <th style="text-align:right">Changes</th>
+                    </tr>
+                    </thead>
+                    <tbody id="auditTable">
+                        <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-3);font-size:13px">Apply a filter above to load audit logs</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px">
+            <button onclick="changePage(-1)" class="btn-ghost" style="padding:7px 14px;font-size:13px">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                Prev
+            </button>
+            <span id="pageInfo" style="font-size:12px;color:var(--text-3)"></span>
+            <button onclick="changePage(1)" class="btn-ghost" style="padding:7px 14px;font-size:13px">
+                Next
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+    </section>
+
+    <!-- ── Webhooks ────────────────────────────────────────────────────── -->
+    <section id="webhooksSection" class="hidden">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px">
             <div>
-                <label class="text-sm font-medium">Rollout: <span id="rolloutValue">100</span>%</label>
-                <input type="range" id="rolloutPercentage" min="0" max="100" value="100" class="w-full" oninput="document.getElementById('rolloutValue').textContent = this.value">
+                <h1 style="font-size:20px;font-weight:700;color:var(--text-1);letter-spacing:-.02em">Webhooks</h1>
+                <p style="font-size:13px;color:var(--text-3);margin-top:3px">Receive signed HTTP notifications when flags change</p>
             </div>
-            <div>
-                <label class="text-sm font-medium">Environment</label>
-                <select id="flagEnvironment" class="w-full border-gray-300 border px-3 py-2 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-600">
-                    <option value="DEVELOPMENT">Development</option>
-                    <option value="STAGING">Staging</option>
-                    <option value="PRODUCTION">Production</option>
-                </select>
+            <button onclick="showWebhookModal()" class="btn-primary">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <span class="hidden sm:inline">Add Webhook</span>
+            </button>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+            <div style="overflow-x:auto">
+                <table class="dtable">
+                    <thead>
+                    <tr>
+                        <th>URL</th><th>Status</th>
+                        <th class="hidden sm:table-cell">Created</th>
+                        <th style="text-align:right">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="webhooksTable">
+                        <tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-3);font-size:13px">Loading…</td></tr>
+                    </tbody>
+                </table>
             </div>
-            <div class="flex gap-6">
-                <label class="flex items-center gap-2">
-                    <input type="checkbox" id="flagEnabled"> Enabled
-                </label>
-                <label class="flex items-center gap-2">
-                    <input type="checkbox" id="defaultValue"> Default Value
-                </label>
+        </div>
+    </section>
+</main>
+
+<!-- Toasts -->
+<div id="toastContainer" style="position:fixed;bottom:20px;right:20px;z-index:60;display:flex;flex-direction:column;gap:8px;align-items:flex-end;width:320px;pointer-events:none"></div>
+
+<!-- ═══ MODALS ══════════════════════════════════════════════════════════ -->
+
+<!-- Flag create/edit -->
+<div id="flagModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(12,26,46,.45);backdrop-filter:blur(4px)">
+    <div class="sheet sm:!animation-none modal-box w-full sm:max-w-lg flex flex-col overflow-hidden" style="max-height:92vh">
+        <div class="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style="border-color:var(--border)">
+            <h2 id="modalTitle" style="font-size:14px;font-weight:700;color:var(--text-1)">Create Feature Flag</h2>
+            <button onclick="closeModal('flagModal')" style="padding:5px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:var(--text-3)" onmouseover="this.style.background='var(--page)'" onmouseout="this.style.background='transparent'">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <form id="flagForm" class="flex flex-col flex-1 overflow-hidden">
+            <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+                <input type="hidden" id="flagId">
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Flag Key <span style="color:#DC2626">*</span></label>
+                    <input id="flagKey" required placeholder="e.g. new-checkout-flow" class="field mono" style="font-family:'DM Mono',monospace;font-size:13px">
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Display Name <span style="color:#DC2626">*</span></label>
+                    <input id="flagName" required placeholder="e.g. New Checkout Flow" class="field">
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Description</label>
+                    <textarea id="flagDescription" rows="2" placeholder="Optional description…" class="field"></textarea>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div>
+                        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Config Type</label>
+                        <select id="flagType" onchange="onFlagTypeChange()" class="field">
+                            <option value="BOOLEAN">Boolean (on/off)</option>
+                            <option value="STRING">String</option>
+                            <option value="NUMBER">Number</option>
+                            <option value="JSON">JSON</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Environment</label>
+                        <select id="flagEnvironment" class="field">
+                            <option value="DEVELOPMENT">Development</option>
+                            <option value="STAGING">Staging</option>
+                            <option value="PRODUCTION">Production</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="stringValueSection" class="hidden">
+                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Config Value</label>
+                    <textarea id="flagStringValue" rows="2" placeholder="Value returned when flag is enabled" class="field mono" style="font-family:'DM Mono',monospace;font-size:13px"></textarea>
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">
+                        Rollout — <span id="rolloutValue" style="color:var(--teal)">100</span>%
+                    </label>
+                    <input type="range" id="rolloutPercentage" min="0" max="100" value="100"
+                           oninput="document.getElementById('rolloutValue').textContent=this.value"
+                           class="w-full h-1.5 rounded-full appearance-none cursor-pointer">
+                </div>
+                <div style="display:flex;gap:20px">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+                        <input type="checkbox" id="flagEnabled" style="width:14px;height:14px;accent-color:var(--teal)">
+                        <span style="font-size:13px;font-weight:500;color:var(--text-2)">Enabled</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+                        <input type="checkbox" id="defaultValue" style="width:14px;height:14px;accent-color:var(--teal)">
+                        <span style="font-size:13px;font-weight:500;color:var(--text-2)">Default Value</span>
+                    </label>
+                </div>
+                <!-- Targeting Rules -->
+                <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F8F9FB;border-bottom:1px solid var(--border)">
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:12px;font-weight:600;color:var(--text-2)">Targeting Rules</span>
+                            <span style="font-size:11px;color:var(--text-3)">optional</span>
+                        </div>
+                        <button type="button" onclick="addTargetingRule()" style="font-size:12px;font-weight:600;color:var(--teal);background:transparent;border:none;cursor:pointer;display:flex;align-items:center;gap:4px">
+                            <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            Add Rule
+                        </button>
+                    </div>
+                    <div style="padding:12px 14px">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px">
+                            <span style="color:var(--text-3)">Match</span>
+                            <select id="targetingMatch" class="field" style="width:auto;padding:4px 28px 4px 8px;font-size:12px">
+                                <option value="all">All rules (AND)</option>
+                                <option value="any">Any rule (OR)</option>
+                            </select>
+                        </div>
+                        <div id="targetingRulesList"></div>
+                        <p style="font-size:11px;color:var(--text-3);margin-top:6px">Operators: eq · neq · contains · startsWith · endsWith · in · notIn · gt · lt · gte · lte</p>
+                    </div>
+                </div>
             </div>
-            <div class="flex gap-3 pt-4">
-                <button type="button" onclick="closeModal('flagModal')" class="flex-1 border rounded py-2 hover:bg-gray-50 transition-colors">Cancel</button>
-                <button type="submit" class="flex-1 bg-blue-600 text-white rounded py-2 hover:bg-blue-700 transition-colors">Save</button>
+            <div style="display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0" class="pb-safe">
+                <button type="button" onclick="closeModal('flagModal')" class="btn-ghost flex-1" style="justify-content:center">Cancel</button>
+                <button type="submit" class="btn-primary flex-1" style="justify-content:center">Save Flag</button>
             </div>
         </form>
     </div>
 </div>
 
+<!-- Promote modal -->
+<div id="promoteModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(12,26,46,.45);backdrop-filter:blur(4px)">
+    <div class="sheet sm:!animation-none modal-box w-full sm:max-w-sm overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b" style="border-color:var(--border)">
+            <h2 style="font-size:14px;font-weight:700;color:var(--text-1)">Promote Flag</h2>
+            <button onclick="closeModal('promoteModal')" style="padding:5px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:var(--text-3)" onmouseover="this.style.background='var(--page)'" onmouseout="this.style.background='transparent'">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="px-5 py-4">
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:4px">Copy <code id="promoteFlagKey" class="mono" style="font-family:'DM Mono',monospace;color:var(--teal);background:var(--teal-bg);padding:2px 6px;border-radius:5px;font-size:12px"></code> to another environment.</p>
+            <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Promoted flag starts <strong>disabled</strong> — enable it when ready.</p>
+            <input type="hidden" id="promoteFlagId">
+            <div id="promoteEnvOptions" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+        </div>
+        <div style="display:flex;gap:10px;padding:0 20px 20px" class="pb-safe">
+            <button onclick="closeModal('promoteModal')" class="btn-ghost flex-1" style="justify-content:center">Cancel</button>
+            <button onclick="confirmPromote()" class="btn-primary flex-1" style="justify-content:center">Promote</button>
+        </div>
+    </div>
+</div>
+
+<!-- Webhook modal -->
+<div id="webhookModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(12,26,46,.45);backdrop-filter:blur(4px)">
+    <div class="sheet sm:!animation-none modal-box w-full sm:max-w-lg flex flex-col overflow-hidden" style="max-height:88vh">
+        <div class="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style="border-color:var(--border)">
+            <h2 style="font-size:14px;font-weight:700;color:var(--text-1)">Add Webhook</h2>
+            <button onclick="closeModal('webhookModal')" style="padding:5px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:var(--text-3)" onmouseover="this.style.background='var(--page)'" onmouseout="this.style.background='transparent'">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <form id="webhookForm" class="flex flex-col flex-1 overflow-hidden">
+            <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Endpoint URL</label>
+                    <input id="webhookUrl" required placeholder="https://your-service.com/hooks/atlasflag" class="field" style="font-size:13px">
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">
+                        Signing Secret <span style="font-weight:400;color:var(--text-3);text-transform:none;letter-spacing:0">— min 16 chars</span>
+                    </label>
+                    <input id="webhookSecret" required minlength="16" class="field mono" style="font-family:'DM Mono',monospace;font-size:13px">
+                    <button type="button" onclick="generateSecret()" style="margin-top:6px;font-size:12px;font-weight:600;color:var(--teal);background:transparent;border:none;cursor:pointer">Generate random secret</button>
+                </div>
+                <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:12px 14px;font-size:12px;color:#92400E;line-height:1.6">
+                    <strong>Save the secret now</strong> — it won't be shown again. Verify payloads using the
+                    <code class="mono" style="background:#FEF3C7;padding:1px 5px;border-radius:4px;font-family:'DM Mono',monospace">X-AtlasFlag-Signature</code> header (HMAC-SHA256).
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0" class="pb-safe">
+                <button type="button" onclick="closeModal('webhookModal')" class="btn-ghost flex-1" style="justify-content:center">Cancel</button>
+                <button type="submit" class="btn-primary flex-1" style="justify-content:center">Add Webhook</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Changes diff modal -->
+<div id="changesModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(12,26,46,.45);backdrop-filter:blur(4px)">
+    <div class="sheet sm:!animation-none modal-box w-full sm:max-w-xl overflow-hidden" style="max-height:88vh">
+        <div class="flex items-center justify-between px-5 py-4 border-b" style="border-color:var(--border)">
+            <h3 style="font-size:14px;font-weight:700;color:var(--text-1)">Change Diff</h3>
+            <button onclick="closeModal('changesModal')" style="padding:5px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:var(--text-3)" onmouseover="this.style.background='var(--page)'" onmouseout="this.style.background='transparent'">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <pre id="changesContent" style="padding:20px;overflow:auto;font-size:12px;line-height:1.7;color:var(--text-2);background:var(--page);font-family:'DM Mono',monospace;max-height:60vh"></pre>
+    </div>
+</div>
+
+<!-- Analytics modal -->
+<div id="analyticsModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(12,26,46,.45);backdrop-filter:blur(4px)">
+    <div class="sheet sm:!animation-none modal-box w-full sm:max-w-lg overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b" style="border-color:var(--border)">
+            <div>
+                <h3 id="analyticsTitle" style="font-size:14px;font-weight:700;color:var(--text-1)">Flag Analytics</h3>
+                <p style="font-size:11px;color:var(--text-3);margin-top:2px">Last 24 hours</p>
+            </div>
+            <button onclick="closeModal('analyticsModal')" style="padding:5px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:var(--text-3)" onmouseover="this.style.background='var(--page)'" onmouseout="this.style.background='transparent'">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div style="padding:20px">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
+                <div style="background:var(--page);border-radius:10px;padding:16px;text-align:center">
+                    <div style="font-size:24px;font-weight:700;color:var(--text-1);margin-bottom:2px" id="analyticsTotal">0</div>
+                    <div style="font-size:11px;font-weight:500;color:var(--text-3)">Total Evals</div>
+                </div>
+                <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:10px;padding:16px;text-align:center">
+                    <div style="font-size:20px;font-weight:700;color:#065F46;margin-bottom:2px" id="analyticsTrue">0</div>
+                    <div style="font-size:11px;font-weight:500;color:#34D399">True</div>
+                </div>
+                <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:16px;text-align:center">
+                    <div style="font-size:20px;font-weight:700;color:#991B1B;margin-bottom:2px" id="analyticsFalse">0</div>
+                    <div style="font-size:11px;font-weight:500;color:#F87171">False</div>
+                </div>
+            </div>
+            <div>
+                <p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:8px">Hourly Breakdown</p>
+                <div id="analyticsSparkline" style="display:flex;align-items:flex-end;gap:1px;background:var(--page);border-radius:8px;padding:10px;overflow:hidden;height:72px"></div>
+                <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--text-3)">
+                    <span>24h ago</span><span>Now</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm dialog -->
+<div id="confirmModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(12,26,46,.45);backdrop-filter:blur(4px)">
+    <div class="sheet sm:!animation-none modal-box w-full sm:max-w-sm overflow-hidden">
+        <div style="padding:24px 24px 16px">
+            <h3 id="confirmTitle" style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:6px"></h3>
+            <p id="confirmMessage" style="font-size:13px;color:var(--text-2);line-height:1.6"></p>
+        </div>
+        <div style="display:flex;gap:10px;padding:0 24px 24px" class="pb-safe">
+            <button onclick="cancelConfirm()" class="btn-ghost flex-1" style="justify-content:center">Cancel</button>
+            <button id="confirmOkBtn" onclick="okConfirm()" class="btn-primary flex-1" style="justify-content:center;background:#DC2626">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile action sheet -->
+<div id="actionSheet" class="hidden fixed inset-0 z-50 flex items-end">
+    <div class="absolute inset-0" style="background:rgba(12,26,46,.45)" onclick="closeActionSheet()"></div>
+    <div class="sheet relative w-full rounded-t-xl pb-safe" style="background:var(--surface);border-top:1px solid var(--border)">
+        <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 8px"></div>
+        <div style="padding:4px 16px 8px">
+            <code id="actionSheetTitle" class="mono" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--teal);background:var(--teal-bg);padding:5px 10px;border-radius:7px;display:block;width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></code>
+        </div>
+        <div id="actionSheetButtons" style="padding:0 8px 12px"></div>
+    </div>
+</div>
+
+<script>
+function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebarOverlay').classList.add('open');
+}
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+}
+</script>
 <script src="/js/app.js" defer></script>
 </body>
 </html>

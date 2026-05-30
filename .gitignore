@@ -1,0 +1,43 @@
+# ── Claude ───────────────────────────────────────────────────────────────────
+.claude/
+CLAUDE.md
+
+# ── Gradle ───────────────────────────────────────────────────────────────────
+.gradle/
+build/
+**/build/
+
+# ── IDE ──────────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# ── Environment & secrets ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.local
+
+# ── Local tooling ────────────────────────────────────────────────────────────
+.java-version
+.node-version
+.nvmrc
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Java ─────────────────────────────────────────────────────────────────────
+*.class
+*.jar
+hs_err_pid*
+
+# Keep Gradle wrapper — required to build without a local Gradle install
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/

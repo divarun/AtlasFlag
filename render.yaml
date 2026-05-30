@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: atlasflag-backend
+    env: java
+    plan: free
+    region: oregon
+    buildCommand: ./gradlew :atlas-flag-service:build -x test
+    startCommand: java $JAVA_OPTS -jar service/build/libs/atlas-flag-service-1.0.0-SNAPSHOT.jar
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: JAVA_VERSION
+        value: 21
+      - key: JAVA_OPTS
+        value: "-Xmx400m -Xms200m -XX:+UseSerialGC"
+      - key: DATABASE_URL
+        sync: false         # set in Render dashboard
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true # Render auto-generates a secure random value
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false         # optional — only needed if SDK clients call from a different origin
+      - key: PORT
+        value: 8080

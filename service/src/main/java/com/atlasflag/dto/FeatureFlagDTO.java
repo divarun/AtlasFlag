@@ -26,7 +26,13 @@ public class FeatureFlagDTO {
     private String environment;
     
     private Boolean defaultValue;
-    
+
+    private String flagType = "BOOLEAN";
+
+    private String stringValue;
+
+    private String targetingRules;
+
     private String createdBy;
     
     private Instant createdAt;
@@ -100,11 +106,35 @@ public class FeatureFlagDTO {
     public Boolean getDefaultValue() {
         return defaultValue;
     }
-    
+
     public void setDefaultValue(Boolean defaultValue) {
         this.defaultValue = defaultValue;
     }
-    
+
+    public String getFlagType() {
+        return flagType;
+    }
+
+    public void setFlagType(String flagType) {
+        this.flagType = flagType;
+    }
+
+    public String getStringValue() {
+        return stringValue;
+    }
+
+    public void setStringValue(String stringValue) {
+        this.stringValue = stringValue;
+    }
+
+    public String getTargetingRules() {
+        return targetingRules;
+    }
+
+    public void setTargetingRules(String targetingRules) {
+        this.targetingRules = targetingRules;
+    }
+
     public String getCreatedBy() {
         return createdBy;
     }

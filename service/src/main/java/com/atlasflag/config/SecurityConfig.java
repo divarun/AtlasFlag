@@ -34,7 +34,8 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/flags/evaluate").permitAll() // Public endpoint for SDK
+                .requestMatchers("/api/v1/flags/evaluate", "/api/v1/flags/evaluate/bulk",
+                    "/api/v1/flags/stream").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
                     .requestMatchers("/", "/login", "/dashboard").permitAll()
@@ -53,8 +54,13 @@ public class SecurityConfig {
         // SECURITY: Restrict allowed origins in production
         // For development, allow localhost. In production, use specific domains.
         String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
-        if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
-            configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        List<String> origins = allowedOrigins == null ? List.of() :
+            Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(java.util.stream.Collectors.toList());
+        if (!origins.isEmpty()) {
+            configuration.setAllowedOrigins(origins);
             configuration.setAllowCredentials(true);
         } else {
             // Development fallback - restrict to localhost
